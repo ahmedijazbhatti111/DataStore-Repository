@@ -1,4 +1,4 @@
-package itech.pdfreader.editor.creator.uitilities
+package com.example.uitilities
 
 import android.content.Context
 import android.graphics.Bitmap
