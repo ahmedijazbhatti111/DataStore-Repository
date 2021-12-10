@@ -1,5 +1,6 @@
 package com.example.uitilities
 
+import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
@@ -16,10 +17,9 @@ import kotlinx.coroutines.flow.map
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.*
 import kotlin.collections.ArrayList
 
-class DataStoreRepo(val context: Context) {
+class DatastoreRepo(val context: Context) {
     private val Context.preferences: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
     private var DEFAULT_APP_IMAGEDATA_DIRECTORY: String = ""
@@ -130,6 +130,7 @@ class DataStoreRepo(val context: Context) {
         }
         return fileCreated && bitmapCompressed && streamClosed
     }
+    
     // Getters
     /**
      * Get int value from DataStore at 'key'. If key not found, return 0
@@ -351,8 +352,6 @@ class DataStoreRepo(val context: Context) {
      * @param key DataStore key
      * @param doubleList ArrayList of Double to be added
      */
-
-
     suspend fun putListDouble(key: String, doubleList: ArrayList<Double>) {
         checkForNullKey(key)
         val myDoubleList = doubleList.toTypedArray()
@@ -404,7 +403,7 @@ class DataStoreRepo(val context: Context) {
      * @param key DataStore key
      * @param boolList ArrayList of Boolean to be added
      */
-   suspend fun putListBoolean(key: String, boolList: ArrayList<Boolean>) {
+    suspend fun putListBoolean(key: String, boolList: ArrayList<Boolean>) {
         checkForNullKey(key)
         val newList = ArrayList<String>()
         for (item in boolList) {
@@ -422,7 +421,6 @@ class DataStoreRepo(val context: Context) {
      * @param key DataStore key
      * @param obj is the Object you want to put
      */
-
     suspend fun putObject(key: String, obj: Any?) {
         checkForNullKey(key)
         val gson = Gson()
@@ -486,10 +484,16 @@ class DataStoreRepo(val context: Context) {
      * Check if external storage is readable or not
      * @return true if readable, false otherwise
      */
-    val isExternalStorageReadable: Boolean
-        get() {
+    val isExternalStorageReadable: Boolean get() {
             val state = Environment.getExternalStorageState()
             return Environment.MEDIA_MOUNTED == state || Environment.MEDIA_MOUNTED_READ_ONLY == state
         }
 
+    companion object {
+        @Volatile
+        private var INSTANCE: DatastoreRepo? = null
+        fun getInstance(context: Context): DatastoreRepo = INSTANCE ?: synchronized(this) {
+                INSTANCE ?: DatastoreRepo(context).also { INSTANCE = it }
+            }
+    }
 }
