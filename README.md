@@ -7,4 +7,8 @@ usee these lib with latest version
  
  
  implementation 'com.google.code.gson:gson:2.8.7'
+ 
+** Initilization**
+
+val datastoreRepo = DatastoreRepo.getInstance(context)
    
