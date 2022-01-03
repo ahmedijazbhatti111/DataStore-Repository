@@ -10,3 +10,7 @@ implementation 'com.google.code.gson:gson:2.8.7'
 ** Initilization**
 
 val datastoreRepo = DatastoreRepo.getInstance(context)
+
+val value = datastoreRepo.getBoolean(KEY) // for set data
+
+datastoreRepo.putBoolean(KEY,value) // for get data
