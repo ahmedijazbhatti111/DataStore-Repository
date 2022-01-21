@@ -1,6 +1,5 @@
 package com.example.uitilities
 
-import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
@@ -12,8 +11,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -130,15 +130,19 @@ class DatastoreRepo(val context: Context) {
         }
         return fileCreated && bitmapCompressed && streamClosed
     }
-    
+
     // Getters
     /**
      * Get int value from DataStore at 'key'. If key not found, return 0
      * @param key DataStore key
      * @return int value at 'key' or 0 if key not found
      */
-    suspend fun getInt(key: String): Int {
-        return context.preferences.data.first()[intPreferencesKey(key)] ?: 0
+    fun getInt(key: String): Int {
+        var value = 0
+        runBlocking {
+            value = context.preferences.data.first()[intPreferencesKey(key)] ?: 0
+        }
+        return value
     }
 
     /**
@@ -146,8 +150,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return ArrayList of Integers
      */
-    suspend fun getListInt(key: String): ArrayList<Int> {
-        val p = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+    fun getListInt(key: String): ArrayList<Int> {
+        var value = ""
+        runBlocking {
+            value = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+        }
+        val p = value
         val myList = TextUtils.split(p, "‚‗‚")
         val arrayToList = ArrayList(listOf(*myList))
         val newList = ArrayList<Int>()
@@ -160,8 +168,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return long value at 'key' or 0 if key not found
      */
-    suspend fun getLong(key: String): Long {
-        return context.preferences.data.first()[longPreferencesKey(key)] ?: 0
+    fun getLong(key: String): Long {
+        var value: Long
+        runBlocking {
+            value = context.preferences.data.first()[longPreferencesKey(key)] ?: 0
+        }
+        return value
     }
 
     /**
@@ -169,8 +181,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return float value at 'key' or 0 if key not found
      */
-    suspend fun getFloat(key: String): Float {
-        return context.preferences.data.first()[floatPreferencesKey(key)] ?: 0F
+    fun getFloat(key: String): Float {
+        var value: Float
+        runBlocking {
+            value =  context.preferences.data.first()[floatPreferencesKey(key)] ?: 0F
+        }
+        return value
     }
 
     /**
@@ -178,7 +194,7 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return double value at 'key' or 0 if exception is thrown
      */
-    suspend fun getDouble(key: String): Double {
+    fun getDouble(key: String): Double {
         val number = getString(key)
         return try {
             number.toDouble()
@@ -192,8 +208,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return ArrayList of Double
      */
-    suspend fun getListDouble(key: String): ArrayList<Double> {
-        val p = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+    fun getListDouble(key: String): ArrayList<Double> {
+        var value = ""
+        runBlocking {
+            value = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+        }
+        val p = value
         val myList = TextUtils.split(p, "‚‗‚")
         val arrayToList = ArrayList(listOf(*myList))
         val newList = ArrayList<Double>()
@@ -206,8 +226,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return ArrayList of Longs
      */
-    suspend fun getListLong(key: String): ArrayList<Long> {
-        val p = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+    fun getListLong(key: String): ArrayList<Long> {
+        var value = ""
+        runBlocking {
+            value = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+        }
+        val p = value
         val myList = TextUtils.split(p, "‚‗‚")
         val arrayToList = ArrayList(listOf(*myList))
         val newList = ArrayList<Long>()
@@ -220,8 +244,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return String value at 'key' or "" (empty String) if key not found
      */
-    suspend fun getString(key: String): String {
-        return context.preferences.data.first()[stringPreferencesKey(key)]?: ""
+    fun getString(key: String): String {
+        var value = ""
+        runBlocking {
+            value = context.preferences.data.first()[stringPreferencesKey(key)]?: ""
+        }
+        return value
     }
 
     /**
@@ -229,8 +257,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return ArrayList of String
      */
-    suspend fun getListString(key: String): ArrayList<String> {
-        val p = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+    fun getListString(key: String): ArrayList<String> {
+        var value = ""
+        runBlocking {
+            value = context.preferences.data.first()[stringPreferencesKey(key)] ?: ""
+        }
+        val p = value
         return ArrayList(listOf(*TextUtils.split(p, "‚‗‚")))
     }
 
@@ -239,10 +271,20 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return boolean value at 'key' or false if key not found
      */
-    suspend fun getBoolean(key: String): Boolean {
+    fun getBoolean(key: String): Boolean {
+        var value = false
+        runBlocking(Dispatchers.IO) {
+            value = context.preferences.data.map {
+                it[booleanPreferencesKey(key)] ?: false
+            }.first()
+        }
+        return value
+    }
+
+    fun getBooleanWithFlow(key: String): Flow<Boolean> {
         return context.preferences.data.map {
             it[booleanPreferencesKey(key)] ?: false
-        }.first()
+        }
     }
 
     /**
@@ -250,7 +292,7 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @return ArrayList of Boolean
      */
-    suspend fun getListBoolean(key: String): ArrayList<Boolean> {
+    fun getListBoolean(key: String): ArrayList<Boolean> {
         val myList = getListString(key)
         val newList = ArrayList<Boolean>()
         for (item in myList) {
@@ -259,7 +301,7 @@ class DatastoreRepo(val context: Context) {
         return newList
     }
 
-    suspend fun getListObject(key: String, mClass: Class<*>?): ArrayList<Any> {
+    fun getListObject(key: String, mClass: Class<*>?): ArrayList<Any> {
         val gson = Gson()
         val objStrings = getListString(key)
         val objects = ArrayList<Any>()
@@ -270,7 +312,7 @@ class DatastoreRepo(val context: Context) {
         return objects
     }
 
-    suspend fun <T> getObject(key: String, classOfT: Class<T>?): T {
+    fun <T> getObject(key: String, classOfT: Class<T>?): T {
         val json = getString(key)
         val value: T = Gson().fromJson(json, classOfT) ?: throw NullPointerException()
         return value as T
@@ -282,10 +324,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value int value to be added
      */
-    suspend fun putInt(key: String, value: Int) {
+    fun putInt(key: String, value: Int) {
         checkForNullKey(key)
-        context.preferences.edit {
-            it[intPreferencesKey(key)] = value
+        runBlocking {
+            context.preferences.edit {
+                it[intPreferencesKey(key)] = value
+            }
         }
     }
 
@@ -294,11 +338,13 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param intList ArrayList of Integer to be added
      */
-    suspend fun putListInt(key: String, intList: ArrayList<Int>) {
+    fun putListInt(key: String, intList: ArrayList<Int>) {
         checkForNullKey(key)
         val myIntList = intList.toTypedArray()
-        context.preferences.edit {
-            it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myIntList)
+        runBlocking {
+            context.preferences.edit {
+                it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myIntList)
+            }
         }
     }
 
@@ -307,9 +353,11 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value long value to be added
      */
-    suspend fun putLong(key: String, value: Long) {
+    fun putLong(key: String, value: Long) {
         checkForNullKey(key)
-        context.preferences.edit {it[longPreferencesKey(key)] = value }
+        runBlocking {
+            context.preferences.edit { it[longPreferencesKey(key)] = value }
+        }
     }
 
     /**
@@ -317,11 +365,14 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param longList ArrayList of Long to be added
      */
-    suspend fun putListLong(key: String, longList: ArrayList<Long>) {
+    fun putListLong(key: String, longList: ArrayList<Long>) {
         checkForNullKey(key)
         val myLongList = longList.toTypedArray()
-        context.preferences.edit{
-            it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myLongList)
+        
+        runBlocking {
+            context.preferences.edit {
+                it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myLongList)
+            }
         }
     }
 
@@ -330,10 +381,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value float value to be added
      */
-    suspend fun putFloat(key: String, value: Float) {
+    fun putFloat(key: String, value: Float) {
         checkForNullKey(key)
-        context.preferences.edit {
-            it[floatPreferencesKey(key)] = value
+        runBlocking {
+            context.preferences.edit {
+                it[floatPreferencesKey(key)] = value
+            }
         }
     }
 
@@ -342,7 +395,7 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value double value to be added
      */
-    suspend fun putDouble(key: String, value: Double) {
+    fun putDouble(key: String, value: Double) {
         checkForNullKey(key)
         putString(key, value.toString())
     }
@@ -352,11 +405,13 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param doubleList ArrayList of Double to be added
      */
-    suspend fun putListDouble(key: String, doubleList: ArrayList<Double>) {
+    fun putListDouble(key: String, doubleList: ArrayList<Double>) {
         checkForNullKey(key)
         val myDoubleList = doubleList.toTypedArray()
-        context.preferences.edit {
-            it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myDoubleList)
+        runBlocking {
+            context.preferences.edit {
+                it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myDoubleList)
+            }
         }
     }
 
@@ -365,11 +420,13 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value String value to be added
      */
-    suspend fun putString(key: String, value: String) {
+    fun putString(key: String, value: String) {
         checkForNullKey(key)
         checkForNullValue(value)
-        context.preferences.edit {
-            it[stringPreferencesKey(key)] = value
+        runBlocking {
+            context.preferences.edit {
+                it[stringPreferencesKey(key)] = value
+            }
         }
     }
 
@@ -378,11 +435,13 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param stringList ArrayList of String to be added
      */
-    suspend fun putListString(key: String, stringList: ArrayList<String>) {
+    fun putListString(key: String, stringList: ArrayList<String>) {
         checkForNullKey(key)
         val myStringList = stringList.toTypedArray()
-        context.preferences.edit {
-            it[stringPreferencesKey(key)] =  TextUtils.join("‚‗‚", myStringList)
+        runBlocking {
+            context.preferences.edit {
+                it[stringPreferencesKey(key)] = TextUtils.join("‚‗‚", myStringList)
+            }
         }
     }
 
@@ -391,10 +450,12 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param value boolean value to be added
      */
-    suspend fun putBoolean(key: String, value: Boolean) {
+    fun putBoolean(key: String, value: Boolean) {
         checkForNullKey(key)
-        context.preferences.edit {
-            it[booleanPreferencesKey(key)] = value
+        runBlocking {
+            context.preferences.edit {
+                it[booleanPreferencesKey(key)] = value
+            }
         }
     }
 
@@ -403,7 +464,7 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param boolList ArrayList of Boolean to be added
      */
-    suspend fun putListBoolean(key: String, boolList: ArrayList<Boolean>) {
+    fun putListBoolean(key: String, boolList: ArrayList<Boolean>) {
         checkForNullKey(key)
         val newList = ArrayList<String>()
         for (item in boolList) {
@@ -421,13 +482,13 @@ class DatastoreRepo(val context: Context) {
      * @param key DataStore key
      * @param obj is the Object you want to put
      */
-    suspend fun putObject(key: String, obj: Any?) {
+    fun putObject(key: String, obj: Any?) {
         checkForNullKey(key)
         val gson = Gson()
         putString(key, gson.toJson(obj))
     }
 
-    suspend fun putListObject(key: String, objArray: ArrayList<Any>) {
+    fun putListObject(key: String, objArray: ArrayList<Any>) {
         checkForNullKey(key)
         val gson = Gson()
         val objStrings = ArrayList<String>()
@@ -441,17 +502,21 @@ class DatastoreRepo(val context: Context) {
      * Remove DataStore item with 'key'
      * @param key DataStore key
      */
-    suspend fun remove(key: String) {
-        context.preferences.edit {
-            it.remove(stringPreferencesKey(key))
+    fun remove(key: String) {
+        runBlocking {
+            context.preferences.edit {
+                it.remove(stringPreferencesKey(key))
+            }
         }
     }
 
     /**
      * Clear DataStore (remove everything)
      */
-    suspend fun clear() {
-        context.preferences.edit { it.clear() }
+    fun clear() {
+        runBlocking {
+            context.preferences.edit { it.clear() }
+        }
     }
 
     /**
